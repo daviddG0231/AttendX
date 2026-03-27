@@ -1,0 +1,11 @@
+# Face Recognition Engine Dependencies
+insightface>=0.7.3
+onnxruntime>=1.16.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+faiss-cpu>=1.7.4
+scikit-learn>=1.3.0
+Pillow>=10.0.0
+deep-sort-realtime>=1.3.2
+requests>=2.31.0
+python-dotenv>=1.0.0
