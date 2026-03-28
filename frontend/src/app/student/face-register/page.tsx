@@ -290,15 +290,15 @@ export default function FaceRegisterPage() {
             <div className="grid lg:grid-cols-5 gap-6">
               {/* Camera Feed */}
               <div className="lg:col-span-3">
-                <div className="glass-card overflow-hidden relative">
+                <div className="rounded-2xl overflow-hidden relative border border-white/10 bg-black">
                   {/* Video */}
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
                     muted
-                    className="w-full object-cover bg-black"
-                    style={{ transform: 'scaleX(-1)', minHeight: '360px', aspectRatio: '16/9' }}
+                    className="w-full block bg-black"
+                    style={{ transform: 'scaleX(-1)', minHeight: '360px', aspectRatio: '16/9', objectFit: 'cover' }}
                   />
                   
                   {/* Countdown overlay */}
