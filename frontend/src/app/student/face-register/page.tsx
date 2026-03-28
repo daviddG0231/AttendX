@@ -45,14 +45,20 @@ export default function FaceRegisterPage() {
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
+        // Explicitly play — autoPlay alone isn't reliable
+        await videoRef.current.play()
       }
       
       setStream(mediaStream)
       setCameraActive(true)
       setMode('camera')
       setError('')
-    } catch (err) {
-      setError('Camera access denied. Please allow camera access and try again.')
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera access in browser settings and try again.')
+      } else {
+        setError('Could not start camera: ' + (err?.message || 'Unknown error'))
+      }
     }
   }, [])
 
@@ -291,8 +297,8 @@ export default function FaceRegisterPage() {
                     autoPlay
                     playsInline
                     muted
-                    className="w-full aspect-video object-cover"
-                    style={{ transform: 'scaleX(-1)' }}
+                    className="w-full object-cover bg-black"
+                    style={{ transform: 'scaleX(-1)', minHeight: '360px', aspectRatio: '16/9' }}
                   />
                   
                   {/* Countdown overlay */}
