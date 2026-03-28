@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable @next/next/no-img-element */
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { 
   Camera, CheckCircle, XCircle, ArrowRight, ArrowLeft, 
@@ -64,42 +65,50 @@ export default function FaceRegisterPage() {
     setCameraActive(false)
   }, [stream])
 
-  // Capture photo from webcam
+  // Actually take the snapshot (called after countdown)
+  const doCapture = useCallback(() => {
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    if (!video || !canvas) return
+
+    // Make sure video has actual dimensions
+    const w = video.videoWidth || 640
+    const h = video.videoHeight || 480
+    canvas.width = w
+    canvas.height = h
+
+    const ctx = canvas.getContext('2d')!
+    ctx.save()
+    // Mirror the image (selfie cam)
+    ctx.translate(w, 0)
+    ctx.scale(-1, 1)
+    ctx.drawImage(video, 0, 0, w, h)
+    ctx.restore()
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+    setPhotos(prev => [...prev, dataUrl])
+    setCurrentPose(prev => prev + 1)
+    setCountdown(null)
+  }, [])
+
+  // Capture photo from webcam with countdown
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
+    if (countdown !== null) return // already counting
 
-    // Countdown effect
     setCountdown(3)
     
+    let count = 3
     const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev === null || prev <= 1) {
-          clearInterval(timer)
-          
-          // Actually capture
-          const video = videoRef.current!
-          const canvas = canvasRef.current!
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          
-          const ctx = canvas.getContext('2d')!
-          // Mirror the image (selfie cam is mirrored)
-          ctx.translate(canvas.width, 0)
-          ctx.scale(-1, 1)
-          ctx.drawImage(video, 0, 0)
-          
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
-          
-          setPhotos(prev => [...prev, dataUrl])
-          setCurrentPose(prev => prev + 1)
-          setCountdown(null)
-          
-          return null
-        }
-        return prev - 1
-      })
+      count--
+      if (count <= 0) {
+        clearInterval(timer)
+        doCapture()
+      } else {
+        setCountdown(count)
+      }
     }, 800)
-  }, [])
+  }, [countdown, doCapture])
 
   // Remove a photo
   const removePhoto = (index: number) => {
