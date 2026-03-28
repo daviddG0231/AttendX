@@ -32,7 +32,8 @@ export default function FaceRegisterPage() {
   const [mode, setMode] = useState<'choose' | 'camera' | 'upload' | 'done'>('choose')
   const [countdown, setCountdown] = useState<number | null>(null)
 
-  // Start webcam
+  // Start webcam — get the stream first, then switch mode so the <video> renders,
+  // then a useEffect below attaches the stream to the video element.
   const startCamera = useCallback(async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -43,12 +44,8 @@ export default function FaceRegisterPage() {
         }
       })
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-        // Explicitly play — autoPlay alone isn't reliable
-        await videoRef.current.play()
-      }
-      
+      // Set stream + mode together. The <video> element only exists when mode === 'camera',
+      // so we CANNOT set srcObject here — it will be done in the useEffect below.
       setStream(mediaStream)
       setCameraActive(true)
       setMode('camera')
@@ -172,6 +169,21 @@ export default function FaceRegisterPage() {
       setUploading(false)
     }
   }
+
+  // Attach the media stream to the <video> element AFTER React renders it.
+  // This is the key fix: the video element only exists in the DOM when mode === 'camera',
+  // so we wait for both `stream` and the ref to be available, then wire them up.
+  useEffect(() => {
+    if (stream && mode === 'camera' && videoRef.current) {
+      const video = videoRef.current
+      if (video.srcObject !== stream) {
+        video.srcObject = stream
+        video.play().catch(() => {
+          // play() can reject if the user hasn't interacted — autoPlay + muted should handle it
+        })
+      }
+    }
+  }, [stream, mode])
 
   // Cleanup camera on unmount
   useEffect(() => {
