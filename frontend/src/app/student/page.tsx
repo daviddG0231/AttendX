@@ -1,20 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Eye, User, BookOpen, Calendar, CheckCircle, XCircle,
   Camera, BarChart3, Bell, Settings, LogOut, Clock,
   TrendingUp, TrendingDown, AlertTriangle, ChevronRight
 } from 'lucide-react'
 
-// Mock data — in production this comes from the API
-const mockStudent = {
-  name: 'Ahmed Sherif',
-  studentId: '221017673',
-  email: 'ahmed@student.aast.edu',
-  department: 'Software Engineering',
-  isFaceRegistered: true,
-  avatar: 'AS'
+// Default mock student (overridden by logged-in user)
+const defaultStudent = {
+  name: 'Student',
+  studentId: '000000000',
+  email: 'student@example.com',
+  department: 'Unknown',
+  isFaceRegistered: false,
+  avatar: 'ST'
 }
 
 const mockCourses = [
@@ -73,7 +73,44 @@ const mockRecentAttendance = [
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
-  const student = mockStudent
+  const [user, setUser] = useState<any>(null)
+  const [facePhotos, setFacePhotos] = useState<string[]>([])
+  
+  useEffect(() => {
+    const stored = localStorage.getItem('attendx_user')
+    if (!stored) {
+      window.location.href = '/login'
+      return
+    }
+    const parsed = JSON.parse(stored)
+    if (parsed.role !== 'student') {
+      window.location.href = '/dashboard'
+      return
+    }
+    setUser(parsed)
+    
+    // Load face photos from localStorage
+    const photos = localStorage.getItem('attendx_face_photos')
+    if (photos) setFacePhotos(JSON.parse(photos))
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('attendx_user')
+    window.location.href = '/login'
+  }
+
+  if (!user) return null
+
+  const student = {
+    ...defaultStudent,
+    name: user.name || defaultStudent.name,
+    email: user.email || defaultStudent.email,
+    studentId: user.studentId || defaultStudent.studentId,
+    department: user.department || defaultStudent.department,
+    avatar: user.avatar || defaultStudent.avatar,
+    isFaceRegistered: facePhotos.length >= 5,
+  }
+
   const courses = mockCourses
   const overall = Math.round(courses.reduce((sum, c) => sum + c.rate, 0) / courses.length)
 
@@ -116,11 +153,17 @@ export default function StudentDashboard() {
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-sm font-bold">
               {student.avatar}
             </div>
-            <div>
-              <div className="text-sm font-medium">{student.name}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{student.name}</div>
               <div className="text-xs text-white/40">{student.studentId}</div>
             </div>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="mt-3 w-full text-xs text-red-400 hover:text-red-300 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-red-500/10 transition-colors"
+          >
+            <LogOut className="w-3 h-3" /> Sign Out
+          </button>
         </div>
       </aside>
 

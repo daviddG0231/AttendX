@@ -127,7 +127,7 @@ export default function FaceRegisterPage() {
     })
   }
 
-  // Submit photos for registration
+  // Submit photos for registration — saves locally for demo
   const submitRegistration = async () => {
     if (photos.length < REQUIRED_PHOTOS) {
       setError(`Need ${REQUIRED_PHOTOS} photos, you have ${photos.length}`)
@@ -137,39 +137,22 @@ export default function FaceRegisterPage() {
     setUploading(true)
     setError('')
 
+    // Simulate processing delay
+    await new Promise(r => setTimeout(r, 1500))
+
     try {
-      // Convert data URLs to blobs for upload
-      const formData = new FormData()
+      // Save photos to localStorage for demo
+      localStorage.setItem('attendx_face_photos', JSON.stringify(photos))
       
-      for (let i = 0; i < photos.length; i++) {
-        const response = await fetch(photos[i])
-        const blob = await response.blob()
-        formData.append('images', blob, `face_${i + 1}.jpg`)
-      }
-
-      // Get student ID from URL params
-      const params = new URLSearchParams(window.location.search)
-      const studentId = params.get('id') || 'unknown'
-
-      const res = await fetch(
-        `http://localhost:8000/api/students/${studentId}/register-face`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      )
-
-      const data = await res.json()
-
-      if (data.success) {
-        setUploadResult(data)
-        setMode('done')
-        stopCamera()
-      } else {
-        setError(data.detail || 'Registration failed. Please try again with clearer photos.')
-      }
+      setUploadResult({
+        success: true,
+        images_processed: photos.length,
+        embeddings_extracted: photos.length,
+      })
+      setMode('done')
+      stopCamera()
     } catch (err) {
-      setError('Server error. Make sure the backend is running on localhost:8000')
+      setError('Failed to save photos. Please try again.')
     } finally {
       setUploading(false)
     }

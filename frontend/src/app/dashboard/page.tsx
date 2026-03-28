@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { 
   Eye, Users, Camera, Calendar, BarChart3, Bell, Settings,
   ChevronRight, Clock, CheckCircle, XCircle, AlertTriangle,
@@ -31,7 +31,30 @@ const mockDashboardData = {
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('overview')
+  const [user, setUser] = useState<any>(null)
   const data = mockDashboardData
+
+  // Auth check
+  React.useEffect(() => {
+    const stored = localStorage.getItem('attendx_user')
+    if (!stored) {
+      window.location.href = '/login'
+      return
+    }
+    const parsed = JSON.parse(stored)
+    if (parsed.role !== 'instructor') {
+      window.location.href = '/student'
+      return
+    }
+    setUser(parsed)
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('attendx_user')
+    window.location.href = '/login'
+  }
+
+  if (!user) return null
   
   return (
     <div className="flex min-h-screen">
@@ -74,13 +97,19 @@ export default function Dashboard() {
         <div className="glass-card p-4 mt-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold">
-              AG
+              {user.avatar || 'DG'}
             </div>
-            <div>
-              <div className="text-sm font-medium">Prof. Atef G.</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{user.name}</div>
               <div className="text-xs text-white/40">Instructor</div>
             </div>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="mt-3 w-full text-xs text-red-400 hover:text-red-300 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-red-500/10 transition-colors"
+          >
+            <Settings className="w-3 h-3" /> Sign Out
+          </button>
         </div>
       </aside>
       
